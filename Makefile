@@ -1,5 +1,5 @@
 #!/bin/make
-#  @(#} $Revision: 1.20 $
+#  @(#} $Revision: 1.1 $
 #  @(#} RCS control in //prime.corp/usr/local/src/cmd/bool/Makefile
 #
 # bool - boolean file operations
@@ -11,8 +11,8 @@ CP = /bin/cp
 MV = /bin/mv
 LN = /bin/ln
 CHMOD = /bin/chmod
-CFLAGS = -g
-#CFLAGS = -O2 -n32
+#CFLAGS = -g
+CFLAGS = -O2 -n32
 
 PROG = and
 LINKS = or xor nand nor xnor
