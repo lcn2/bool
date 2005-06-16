@@ -1,9 +1,9 @@
 /*
  * and - produce the logical op of multiple files
  *
- * @(#) $Revision$
- * @(#) $Id$
- * @(#) $Source$
+ * @(#) $Revision: 1.2 $
+ * @(#) $Id: and.c,v 1.2 1999/09/20 18:43:48 chongo Exp chongo $
+ * @(#) $Source: /usr/local/src/cmd/bool/RCS/and.c,v $
  *
  * Copyright (c) 1997 by Landon Curt Noll.  All Rights Reserved.
  *
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 	exit(1);
     }
     if (argc < 2) {
-	fprintf(stderr, "usage: %d file [file2 ...]\n", program);
+	fprintf(stderr, "usage: %s file [file2 ...]\n", program);
 	exit(2);
     }
 
