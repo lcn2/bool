@@ -1,9 +1,9 @@
 /*
  * and - produce the logical op of multiple files
  *
- * @(#) $Revision: 1.2 $
- * @(#) $Id: and.c,v 1.2 1999/09/20 18:43:48 chongo Exp chongo $
- * @(#) $Source: /usr/local/src/cmd/bool/RCS/and.c,v $
+ * @(#) $Revision: 1.3 $
+ * @(#) $Id: and.c,v 1.3 2005/06/16 22:06:47 chongo Exp root $
+ * @(#) $Source: /usr/local/src/bin/bool/RCS/and.c,v $
  *
  * Copyright (c) 1997 by Landon Curt Noll.  All Rights Reserved.
  *
@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 char *program;		/* our name */
 
