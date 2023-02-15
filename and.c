@@ -1,11 +1,11 @@
 /*
  * and - produce the logical op of multiple files
  *
- * @(#) $Revision: 1.3 $
- * @(#) $Id: and.c,v 1.3 2005/06/16 22:06:47 chongo Exp root $
+ * @(#) $Revision: 1.4 $
+ * @(#) $Id: and.c,v 1.4 2015/09/06 02:30:03 root Exp $
  * @(#) $Source: /usr/local/src/bin/bool/RCS/and.c,v $
  *
- * Copyright (c) 1997 by Landon Curt Noll.  All Rights Reserved.
+ * Copyright (c) 1997,2023 by Landon Curt Noll.  All Rights Reserved.
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby granted,
@@ -52,6 +52,7 @@ char out[BUFSIZ];	/* write buffer (logical operation of all reads) */
 #define XNOR 6	/* logical xnor operation */
 
 
+int
 main(int argc, char *argv[])
 {
     FILE **stream;	/* array of file descriptors */

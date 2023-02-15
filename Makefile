@@ -2,9 +2,9 @@
 #
 # bool - boolean file operations
 #
-# @(#) $Revision$
-# @(#) $Id$
-# @(#) $Source$
+# @(#) $Revision: 1.3 $
+# @(#) $Id: Makefile,v 1.3 1999/09/20 18:43:48 chongo Exp $
+# @(#) $Source: /usr/local/src/bin/bool/RCS/Makefile,v $
 #
 # Copyright (c) 1997 by Landon Curt Noll.  All Rights Reserved.
 #
