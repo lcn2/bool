@@ -1,12 +1,8 @@
-#!/usr/bin/make
+#!/usr/bin/env make
 #
 # bool - boolean file operations
 #
-# @(#) $Revision: 1.3 $
-# @(#) $Id: Makefile,v 1.3 1999/09/20 18:43:48 chongo Exp $
-# @(#) $Source: /usr/local/src/bin/bool/RCS/Makefile,v $
-#
-# Copyright (c) 1997 by Landon Curt Noll.  All Rights Reserved.
+# Copyright (c) 1997,2023 by Landon Curt Noll.  All Rights Reserved.
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby granted,
@@ -26,15 +22,14 @@
 # OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-SHELL = /bin/sh
-DEST = /usr/local/bin
-RM = /bin/rm -f
-CP = /bin/cp
-MV = /bin/mv
-LN = /bin/ln
-CHMOD = /bin/chmod
-#CFLAGS = -g
-CFLAGS = -O2
+SHELL= bash
+DEST= /usr/local/bin
+RM= rm
+CP= cp
+MV= mv
+LN= ln
+CHMOD = chmod
+CFLAGS = -O3 -g3
 
 PROG = and
 LINKS = or xor nand nor xnor
@@ -61,7 +56,7 @@ xnor: and
 	${LN} -f $? $@
 
 install: all
-	${RM} ${DEST}/${PROG}.new
+	${RM} -f ${DEST}/${PROG}.new
 	${CP} ${PROG} ${DEST}/${PROG}.new
 	${CHMOD} 0555 ${DEST}/${PROG}.new
 	${MV} -f ${DEST}/${PROG}.new ${DEST}/${PROG}
@@ -71,7 +66,7 @@ install: all
 	done
 
 clean:
-	${RM} *.o
+	${RM} -f *.o
 
 clobber: clean
-	${RM} ${TARGETS}
+	${RM} -f ${TARGETS}
