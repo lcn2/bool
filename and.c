@@ -1,11 +1,5 @@
 /*
- * and - produce the logical op of multiple files
- *
- * @(#) $Revision: 1.4 $
- * @(#) $Id: and.c,v 1.4 2015/09/06 02:30:03 root Exp $
- * @(#) $Source: /usr/local/src/bin/bool/RCS/and.c,v $
- *
- * Copyright (c) 1997,2023 by Landon Curt Noll.  All Rights Reserved.
+ * and - produce the logical op (and, or, xor, nand, nor xnor) of files
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby granted,
@@ -38,11 +32,15 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <strings.h>
+#include <sys/errno.h>
 
-char *program;		/* our name */
 
-char in[BUFSIZ];	/* read buffer */
-char out[BUFSIZ];	/* write buffer (logical operation of all reads) */
+/*
+ * official version
+ */
+#define VERSION "1.4.1 2025-04-11"          /* format: major.minor YYYY-MM-DD */
 
 #define AND 1	/* logical and operation */
 #define OR 2	/* logical or operation */
@@ -50,6 +48,40 @@ char out[BUFSIZ];	/* write buffer (logical operation of all reads) */
 #define NAND 4	/* logical nand operation */
 #define NOR 5	/* logical nor operation */
 #define XNOR 6	/* logical xnor operation */
+
+
+/*
+ * usage message
+ */
+static const char * const usage =
+  "usage: %s [-h] level] [-V] [-n]\n"
+        "    [-c] [-o offset] file ...\n"
+        "\n"
+        "    -h            print help message and exit\n"
+        "    -V            print version string and exit\n"
+        "\n"
+        "    file ...      file(s) to process, - ==> read stdin\n"
+        "\n"
+        "Exit codes:\n"
+        "    0         all OK\n"
+	"    1         failed to open or read a file\n"
+        "    2         -h and help string printed or -V and version string printed\n"
+        "    3         command line error\n"
+	"    4         program name isn't: and, or, xor, nand, nor xnor\n"
+        " >= 10        internal error\n"
+        "\n"
+        "%s version: %s\n";
+
+
+/*
+ * static declarations
+ */
+static char *program = NULL;    /* our name */
+static char *prog = NULL;       /* basename of program */
+static const char * const version = VERSION;
+/**/
+static char in[BUFSIZ];	    /* read buffer */
+static char out[BUFSIZ];    /* write buffer (logical operation of all reads) */
 
 
 int
@@ -62,7 +94,6 @@ main(int argc, char *argv[])
     int outcnt;		/* chars in the out buffer that have been processed */
     int boolcnt;	/* chars in the in buffer that may be processed */
     int op;		/* operation type: AND, OR, ... XNOR */
-    char *p;
     int i;
     int j;
 
@@ -70,52 +101,96 @@ main(int argc, char *argv[])
      * parse args
      */
     program = argv[0];
-    p = strrchr(program, '/');
-    if (p == NULL) {
-	p = program;
+    prog = strrchr(program, '/');
+    if (prog == NULL) {
+	prog = program;
     } else {
-	++p;
+	++prog;
     }
-    if (strcmp(p, "and") == 0) {
+    program = argv[0];
+    while ((i = getopt(argc, argv, ":hV")) != -1) {
+        switch (i) {
+
+        case 'h':                   /* -h - print help message and exit */
+	    fprintf(stderr, usage, program, prog, version);
+            exit(2); /* ooo */
+            /*NOTREACHED*/
+
+	 case 'V':                   /* -V - print version string and exit */
+            (void) printf("%s\n", version);
+            exit(2); /* ooo */
+            /*NOTREACHED*/
+
+	case ':':
+            (void) fprintf(stderr, "%s: ERROR: requires an argument -- %c\n", program, optopt);
+	    fprintf(stderr, usage, program, prog, version);
+            exit(3); /* ooo */
+            /*NOTREACHED*/
+
+        case '?':
+            (void) fprintf(stderr, "%s: ERROR: illegal option -- %c\n", program, optopt);
+	    fprintf(stderr, usage, program, prog, version);
+            exit(3); /* ooo */
+            /*NOTREACHED*/
+
+        default:
+            fprintf(stderr, "%s: ERROR: invalid -flag\n", program);
+	    fprintf(stderr, usage, program, prog, version);
+            exit(3); /* ooo */
+            /*NOTREACHED*/
+        }
+    }
+    /* skip over command line options */
+    argv += optind;
+    argc -= optind;
+    /* check the arg count */
+    if (argc < 1) {
+        fprintf(stderr, "%s: ERROR: expected at least 1 arg, found: %d\n", program, argc);
+	fprintf(stderr, usage, program, prog, version);
+        exit(3); /* ooo */
+        /*NOTREACHED*/
+    }
+
+
+    /*
+     * determine boolean operation
+     */
+    if (strcmp(prog, "and") == 0) {
 	op = AND;
-    } else if (strcmp(p, "or") == 0) {
+    } else if (strcmp(prog, "or") == 0) {
 	op = OR;
-    } else if (strcmp(p, "xor") == 0) {
+    } else if (strcmp(prog, "xor") == 0) {
 	op = XOR;
-    } else if (strcmp(p, "nand") == 0) {
+    } else if (strcmp(prog, "nand") == 0) {
 	op = NAND;
-    } else if (strcmp(p, "nor") == 0) {
+    } else if (strcmp(prog, "nor") == 0) {
 	op = NOR;
-    } else if (strcmp(p, "xnor") == 0) {
+    } else if (strcmp(prog, "xnor") == 0) {
 	op = XNOR;
     } else {
 	fprintf(stderr,
 	  "%s: program name isn't: and, or, xor, nand, nor or xnor\n", program);
-	exit(1);
-    }
-    if (argc < 2) {
-	fprintf(stderr, "usage: %s file [file2 ...]\n", program);
-	exit(2);
+	exit(4);
     }
 
     /*
      * open each file
      */
-    stream = (FILE **)malloc((argc-1) * sizeof(FILE *));
+    stream = (FILE **)malloc((argc+1) * sizeof(FILE *));    /* +1 for paranoia */
     if (stream == NULL) {
 	fprintf(stderr, "%s: malloc failure of %d FILE*'s\n", program, argc-1);
-	exit(3);
+	exit(10);
     }
-    for (i=0; i < argc-1; ++i) {
+    for (i=0; i < argc; ++i) {
 	/* - means stdin */
-	if (strcmp(argv[i+1], "-") == 0) {
-	    stream[i] = stdin;	
+	if (strcmp(argv[i], "-") == 0) {
+	    stream[i] = stdin;
 	} else {
-	    stream[i] = fopen(argv[i+1], "r");
+	    stream[i] = fopen(argv[i], "r");
 	    if (stream[i] == NULL) {
 		fprintf(stderr, "%s: fopen of %s: ", program, argv[i+1]);
 		perror(NULL);
-		exit(4);
+		exit(1);
 	    }
 	}
     }
@@ -123,7 +198,7 @@ main(int argc, char *argv[])
     /*
      * read blocks in each file until all are EOF
      */
-    opencnt = argc - 1;
+    opencnt = argc;
     do {
 
 	/* clear the next output buffer */
@@ -133,15 +208,15 @@ main(int argc, char *argv[])
 	/*
 	 * read each open file
 	 */
-	for (i=0; i < argc-1; ++i) {
+	for (i=0; i < argc; ++i) {
 
 	    /* skip already closed files */
 	    if (stream[i] == NULL) {
 		continue;
 	    }
 
-	    /* 
-	     * read a block from the file 
+	    /*
+	     * read a block from the file
 	     */
 	    clearerr(stream[i]);
 	    readcnt = fread(in, 1, BUFSIZ, stream[i]);
@@ -216,7 +291,7 @@ main(int argc, char *argv[])
 	    clearerr(stdout);
 	    writecnt = fwrite(out, 1, outcnt, stdout);
 	    if (writecnt != outcnt) {
-		
+
 		/* stop on EOF or write error */
 		if (ferror(stdout)) {
 		    fprintf(stderr, "%s: write error: ", program);
@@ -225,13 +300,13 @@ main(int argc, char *argv[])
 		    fprintf(stderr,
 		      "%s: short write %d < %d: ", program, writecnt, outcnt);
 		}
-		exit(5);
+		exit(11);
 	    }
 	}
     } while (opencnt > 0);
 
     /*
-     * all done
+     * All Done!!! All Done!!! -- Jessica Noll, Age 2
      */
     exit(0);
 }

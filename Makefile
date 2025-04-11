@@ -2,7 +2,7 @@
 #
 # bool - boolean file operations
 #
-# Copyright (c) 1997,2023 by Landon Curt Noll.  All Rights Reserved.
+# Copyright (c) 1997,1999,2005,2015,2023,2025 by Landon Curt Noll.  All Rights Reserved.
 #
 # Permission to use, copy, modify, and distribute this software and
 # its documentation for any purpose and without fee is hereby granted,
@@ -21,24 +21,62 @@
 # USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 # OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
+#
+# chongo (Landon Curt Noll) /\oo/\
+#
+# http://www.isthe.com/chongo/index.html
+# https://github.com/lcn2
+#
+# Share and enjoy!  :-)
 
-SHELL= bash
-DEST= /usr/local/bin
-RM= rm
+
+#############
+# utilities #
+#############
+
+CC= cc
+CHMOD= chmod
 CP= cp
-MV= mv
+ID= id
+INSTALL= install
 LN= ln
-CHMOD = chmod
-CFLAGS = -O3 -g3
+RM= rm
+SHELL= bash
+
+#CFLAGS= -O3 -g3 --pedantic -Wall -Werror
+CFLAGS= -O3 -g3 --pedantic -Wall
+
+
+######################
+# target information #
+######################
+
+# V=@:  do not echo debug statements (quiet mode)
+# V=@   echo debug statements (debug / verbose mode)
+#
+V=@:
+#V=@
+
+DESTDIR= /usr/local/bin
 
 PROG = and
 LINKS = or xor nand nor xnor
 TARGETS = ${PROG} ${LINKS}
 
-all: ${TARGETS}
 
-and: and.c
-	${CC} ${CFLAGS} -o $@ $?
+######################################
+# all - default rule - must be first #
+######################################
+
+all: ${TARGETS}
+	${V} echo DEBUG =-= $@ start =-=
+	${V} echo DEBUG =-= $@ end =-=
+
+and.o: and.c
+	${CC} ${CFLAGS} -c and.c
+
+and: and.o
+	${CC} ${CFLAGS} and.o -o $@
 
 or: and
 	${LN} -f $? $@
@@ -55,18 +93,35 @@ nor: and
 xnor: and
 	${LN} -f $? $@
 
-install: all
-	${RM} -f ${DEST}/${PROG}.new
-	${CP} ${PROG} ${DEST}/${PROG}.new
-	${CHMOD} 0555 ${DEST}/${PROG}.new
-	${MV} -f ${DEST}/${PROG}.new ${DEST}/${PROG}
-	@for i in ${LINKS}; do \
-	    echo "${LN} -f ${DEST}/${PROG} ${DEST}/$$i"; \
-	    ${LN} -f ${DEST}/${PROG} ${DEST}/$$i; \
-	done
+
+#################################################
+# .PHONY list of rules that do not create files #
+#################################################
+
+.PHONY: all configure clean clobber install
+
+
+###################################
+# standard Makefile utility rules #
+###################################
+
+configure:
+	${V} echo DEBUG =-= $@ start =-=
+	${V} echo DEBUG =-= $@ end =-=
 
 clean:
-	${RM} -f *.o
+	${V} echo DEBUG =-= $@ start =-=
+	${RM} -f and.o
+	${V} echo DEBUG =-= $@ end =-=
 
 clobber: clean
+	${V} echo DEBUG =-= $@ start =-=
 	${RM} -f ${TARGETS}
+	${V} echo DEBUG =-= $@ end =-=
+
+install: all
+	${V} echo DEBUG =-= $@ start =-=
+	@if [[ $$(${ID} -u) != 0 ]]; then echo "ERROR: must be root to make $@" 1>&2; exit 2; fi
+	@echo perhaps ${INSTALL} -d -m 0755 ${DESTDIR}
+	@echo perhaps ${INSTALL} -m 0555 ${TARGETS} ${DESTDIR}
+	${V} echo DEBUG =-= $@ end =-=

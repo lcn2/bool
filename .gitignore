@@ -1,6 +1,12 @@
 and
+and.o
 nand
+nand.o
 nor
+nor.o
 or
+or.o
 xnor
+xnor.o
 xor
+xor.o
