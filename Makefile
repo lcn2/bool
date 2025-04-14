@@ -57,7 +57,8 @@ CFLAGS= -O3 -g3 --pedantic -Wall
 V=@:
 #V=@
 
-DESTDIR= /usr/local/bin
+PREFIX= /usr/local
+DESTDIR= ${PREFIX}/bin
 
 PROG = and
 LINKS = or xor nand nor xnor
